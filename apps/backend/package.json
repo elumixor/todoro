@@ -8,23 +8,31 @@
   },
   "scripts": {
     "dev": "nitro dev --port 10000 --host",
-    "build": "nitro build",
+    "build": "prisma generate && nitro build",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
-    "prisma:push": "prisma db push"
+    "prisma:push": "prisma db push",
+    "client:generate": "bunx nitro-client"
   },
   "dependencies": {
     "@ai-sdk/openai": "^3.0.50",
+    "@libsql/client": "^0.17.2",
     "@prisma/adapter-libsql": "^7.5.0",
     "@prisma/client": "^7.6.0",
     "ai": "^6.0.146",
     "chat": "^4.23.0",
     "@chat-adapter/telegram": "^4.23.0",
     "@chat-adapter/state-memory": "^4.23.0",
+    "@elumixor/nitro-client": "^3.3.3",
     "h3": "^1.15.1",
     "nitropack": "^2.11.9",
-    "openai": "^4.80.0",
     "prisma": "^7.6.0",
     "zod": "^4.3.6"
+  },
+  "overrides": {
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.2"
   }
 }

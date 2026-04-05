@@ -49,7 +49,7 @@
     : 'bg-[var(--color-surface-2)] hover:bg-[var(--color-surface-3)] w-11 justify-center'}"
 >
   {#if recording}
-    <Square size={14} fill="currentColor" class="text-white" />
+    <Square size={14} fill="currentColor" class="text-bg" />
     <span class="font-mono text-xs text-white/90 tracking-wider">{formatTime(elapsed)}</span>
   {:else}
     <Mic size={18} class="text-[var(--color-ink-2)]" />

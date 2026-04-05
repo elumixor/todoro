@@ -1,8 +1,7 @@
-import { defineEventHandler, getRouterParam } from "h3";
 import { prisma } from "services/prisma";
+import { handler } from "utils";
 
-export default defineEventHandler(async (event) => {
-  const id = getRouterParam(event, "id")!;
-  await prisma.task.delete({ where: { id } });
+export default handler(async ({ router }) => {
+  await prisma.task.delete({ where: { id: router.id } });
   return { ok: true };
 });

@@ -1,10 +1,10 @@
-import { defineEventHandler, readFormData } from "h3";
-import OpenAI from "openai";
 import { env } from "env";
+import { readFormData } from "h3";
+import { handler } from "utils";
 
-const openai = new OpenAI({ apiKey: env.OPENAI_API_KEY });
+const OPENAI_API = "https://api.openai.com/v1";
 
-export default defineEventHandler(async (event) => {
+export default handler(async ({ event }) => {
   const formData = await readFormData(event);
   const audioFile = formData.get("audio") as File;
 
@@ -13,24 +13,40 @@ export default defineEventHandler(async (event) => {
   }
 
   // Transcribe with Whisper
-  const transcription = await openai.audio.transcriptions.create({
-    file: audioFile,
-    model: "whisper-1",
+  const whisperForm = new FormData();
+  whisperForm.append("file", audioFile);
+  whisperForm.append("model", "whisper-1");
+
+  const transcriptionRes = await fetch(`${OPENAI_API}/audio/transcriptions`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${env.OPENAI_API_KEY}` },
+    body: whisperForm,
   });
+  const transcription = (await transcriptionRes.json()) as { text: string };
 
   // Use GPT to parse tasks from transcription
-  const completion = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
-    messages: [
-      {
-        role: "system",
-        content:
-          "Extract a list of tasks from the user's speech. Return a JSON array of strings, each being a concise task. If it's a single task, return an array with one item. Only return the JSON array, no other text.",
-      },
-      { role: "user", content: transcription.text },
-    ],
-    response_format: { type: "json_object" },
+  const completionRes = await fetch(`${OPENAI_API}/chat/completions`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${env.OPENAI_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "system",
+          content:
+            'Extract a list of tasks from the user\'s speech. Return JSON: {"tasks": ["task1", "task2"]}. If it\'s a single task, return an array with one item.',
+        },
+        { role: "user", content: transcription.text },
+      ],
+      response_format: { type: "json_object" },
+    }),
   });
+  const completion = (await completionRes.json()) as {
+    choices: { message: { content: string } }[];
+  };
 
   const parsed = JSON.parse(completion.choices[0].message.content ?? "{}");
   const tasks: string[] = parsed.tasks ?? [transcription.text];

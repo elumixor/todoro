@@ -34,10 +34,36 @@
 }
 
 @utility safe-top {
-  padding-top: env(safe-area-inset-top, 0px);
+  margin-top: env(safe-area-inset-top, 0px);
 }
 @utility safe-bottom {
-  padding-bottom: env(safe-area-inset-bottom, 0px);
+  margin-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* ── Light theme ──────────────────────────────────────────────── */
+html.light {
+  --color-bg: oklch(97% 0.006 280);
+  --color-surface: oklch(93% 0.008 280);
+  --color-surface-2: oklch(89% 0.008 280);
+  --color-surface-3: oklch(85% 0.008 280);
+  --color-border: oklch(0% 0 0 / 0.08);
+  --color-border-hover: oklch(0% 0 0 / 0.15);
+
+  --color-ink: oklch(18% 0.012 280);
+  --color-ink-2: oklch(18% 0.012 280 / 0.55);
+  --color-ink-3: oklch(18% 0.012 280 / 0.30);
+
+  --color-accent: oklch(52% 0.14 165);
+  --color-accent-hover: oklch(46% 0.12 165);
+  --color-accent-glow: oklch(52% 0.14 165 / 0.12);
+  --color-accent-dim: oklch(52% 0.14 165 / 0.08);
+
+  --color-danger: oklch(55% 0.2 25);
+  --color-danger-glow: oklch(55% 0.2 25 / 0.10);
+  --color-voice: oklch(58% 0.18 35);
+  --color-voice-glow: oklch(58% 0.18 35 / 0.15);
+
+  --color-done: oklch(52% 0.14 165 / 0.10);
 }
 
 /* ── Base ──────────────────────────────────────────────────────── */

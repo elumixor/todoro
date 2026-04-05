@@ -8,6 +8,7 @@ export default defineNitroConfig({
   alias: {
     env: resolve("./src/env"),
     services: resolve("./src/services"),
+    utils: resolve("./src/utils/handler.ts"),
   },
   rollupConfig: {
     plugins: [

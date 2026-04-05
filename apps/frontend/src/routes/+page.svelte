@@ -4,6 +4,7 @@
   import { api, type Day, type Task } from "$lib/api/client";
   import DayCard from "$lib/components/DayCard.svelte";
   import VoiceButton from "$lib/components/VoiceButton.svelte";
+  import ThemeToggle from "$lib/components/ThemeToggle.svelte";
 
   let days = $state<Day[]>([]);
   let loading = $state(true);
@@ -13,7 +14,7 @@
   const todayDay = $derived(days.find((d) => d.date === today));
 
   onMount(async () => {
-    days = await api.getDays();
+    days = await api.days.$get();
     loading = false;
   });
 
@@ -21,17 +22,17 @@
     const lastDay = days[0];
     const incompleteIds = lastDay?.tasks.filter((t) => !t.completed).map((t) => t.id) ?? [];
 
-    const newDay = await api.createDay(today, incompleteIds);
+    const newDay = await api.days.$post({ date: today, transferTaskIds: incompleteIds });
     if (newDay) days = [newDay, ...days.filter((d) => d.date !== today)];
   }
 
   async function handleAddTask(dayId: string, text: string) {
-    const task = await api.addTask(dayId, text);
+    const task = await api.tasks.$post({ dayId, text });
     days = days.map((d) => (d.id === dayId ? { ...d, tasks: [...d.tasks, task] } : d));
   }
 
   async function handleToggleTask(task: Task) {
-    const updated = await api.updateTask(task.id, { completed: !task.completed });
+    const updated = await api.tasks(task.id).$patch({ completed: !task.completed });
     days = days.map((d) => ({
       ...d,
       tasks: d.tasks.map((t) => (t.id === updated.id ? updated : t)),
@@ -39,7 +40,7 @@
   }
 
   async function handleDeleteTask(task: Task) {
-    await api.deleteTask(task.id);
+    await api.tasks(task.id).$delete();
     days = days.map((d) => ({
       ...d,
       tasks: d.tasks.filter((t) => t.id !== task.id),
@@ -47,7 +48,7 @@
   }
 
   async function handleEditTask(task: Task, text: string) {
-    const updated = await api.updateTask(task.id, { text });
+    const updated = await api.tasks(task.id).$patch({ text });
     days = days.map((d) => ({
       ...d,
       tasks: d.tasks.map((t) => (t.id === updated.id ? updated : t)),
@@ -57,7 +58,9 @@
   async function handleVoiceRecorded(blob: Blob) {
     voiceLoading = true;
     try {
-      const result = await api.transcribeVoice(blob);
+      const formData = new FormData();
+      formData.append("audio", blob, "recording.webm");
+      const result = await api.voice.transcribe.$post(formData);
       if (!todayDay) await handleNewDay();
 
       const currentToday = days.find((d) => d.date === today);
@@ -76,7 +79,7 @@
 <div class="fixed top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] pointer-events-none
   bg-[radial-gradient(ellipse_at_center,var(--color-accent-glow)_0%,transparent_70%)] opacity-40"></div>
 
-<main class="relative max-w-md mx-auto px-5 pt-16 pb-12 safe-top safe-bottom min-h-screen">
+<main class="relative max-w-md mx-auto px-5 pt-24 pb-12 safe-top safe-bottom min-h-screen">
   <!-- Header -->
   <header class="flex items-center justify-between mb-10 animate-fade-up">
     <div>
@@ -87,6 +90,7 @@
     </div>
 
     <div class="flex items-center gap-2">
+      <ThemeToggle />
       {#if voiceLoading}
         <div class="w-11 h-11 rounded-2xl bg-[var(--color-surface-2)] flex items-center justify-center">
           <Loader2 size={18} class="animate-spin text-[var(--color-ink-2)]" />
