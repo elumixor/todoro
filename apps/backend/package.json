@@ -1,0 +1,30 @@
+{
+  "name": "backend",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./generated/client/index.ts"
+  },
+  "scripts": {
+    "dev": "nitro dev --port 10000 --host",
+    "build": "nitro build",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:push": "prisma db push"
+  },
+  "dependencies": {
+    "@ai-sdk/openai": "^3.0.50",
+    "@prisma/adapter-libsql": "^7.5.0",
+    "@prisma/client": "^7.6.0",
+    "ai": "^6.0.146",
+    "chat": "^4.23.0",
+    "@chat-adapter/telegram": "^4.23.0",
+    "@chat-adapter/state-memory": "^4.23.0",
+    "h3": "^1.15.1",
+    "nitropack": "^2.11.9",
+    "openai": "^4.80.0",
+    "prisma": "^7.6.0",
+    "zod": "^4.3.6"
+  }
+}

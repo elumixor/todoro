@@ -1,0 +1,11 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "paths": {
+      "env": ["./src/env.ts"],
+      "services/*": ["./src/services/*"],
+      "generated:prisma": ["./generated/prisma/client.ts"]
+    }
+  },
+  "include": ["src/**/*.ts"]
+}

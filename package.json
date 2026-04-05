@@ -1,0 +1,16 @@
+{
+  "name": "todoro",
+  "version": "0.0.1",
+  "private": true,
+  "workspaces": ["apps/*"],
+  "scripts": {
+    "dev": "bun run --filter '*' dev",
+    "lint": "biome lint .",
+    "format": "biome format . --write",
+    "check": "biome check ."
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.6",
+    "typescript": "^5.8.3"
+  }
+}
