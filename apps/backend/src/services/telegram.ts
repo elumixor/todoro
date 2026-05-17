@@ -41,7 +41,7 @@ export async function handleTelegramUpdate(update: Record<string, unknown>) {
   if (text === "/start" || text === "/help") {
     await sendMessage(
       chatId,
-      "*Todoro Bot*\n\n" +
+      "*Eos Bot*\n\n" +
         "/today - Show today's tasks\n" +
         "/add <task> - Add a task\n" +
         "/done <number> - Complete a task\n" +

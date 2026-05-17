@@ -140,7 +140,7 @@
   <!-- Header -->
   <header class="flex items-center justify-between mb-10 animate-fade-up">
     <div>
-      <h1 class="text-xl font-bold tracking-tight">Todoro</h1>
+      <h1 class="text-xl font-bold tracking-tight">Eos</h1>
       <p class="text-[11px] font-mono tracking-widest text-[var(--color-ink-3)] mt-0.5 uppercase">
         {new Date().toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric" })}
       </p>

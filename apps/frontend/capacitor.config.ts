@@ -1,8 +1,8 @@
 import type { CapacitorConfig } from "@capacitor/cli";
 
 const config: CapacitorConfig = {
-  appId: "com.todoro.app",
-  appName: "Todoro",
+  appId: "com.eos.app",
+  appName: "Eos",
   webDir: "build",
   server: {
     androidScheme: "https",
