@@ -10,8 +10,7 @@
     "dev": "nitro dev --port 10000 --host",
     "build": "prisma generate && nitro build",
     "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate dev",
-    "prisma:push": "prisma db push",
+    "prisma:update": "bash scripts/prisma-update.sh",
     "client:generate": "bunx nitro-client"
   },
   "dependencies": {

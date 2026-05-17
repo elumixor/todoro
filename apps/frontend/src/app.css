@@ -98,6 +98,16 @@ body::before {
   background-size: 256px 256px;
 }
 
+/* While a drag is in progress, kill native selection / iOS callout so a
+   finger drag over task text reorders instead of selecting. */
+html.dnd-dragging,
+html.dnd-dragging * {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  cursor: grabbing !important;
+}
+
 /* ── Animations ───────────────────────────────────────────────── */
 @keyframes fade-up {
   from { opacity: 0; transform: translateY(12px); }

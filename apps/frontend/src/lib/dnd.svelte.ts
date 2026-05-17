@@ -24,6 +24,10 @@ class Dnd {
     return this.taskId !== null;
   }
 
+  private rafId = 0;
+  private pendingX = 0;
+  private pendingY = 0;
+
   start(taskId: string, label: string, from: string, ev: PointerEvent, width: number) {
     this.taskId = taskId;
     this.label = label;
@@ -32,18 +36,34 @@ class Dnd {
     this.overIndex = 0;
     this.x = ev.clientX;
     this.y = ev.clientY;
+    this.pendingX = ev.clientX;
+    this.pendingY = ev.clientY;
     this.width = width;
+    // Suppress native text selection / iOS touch-callout for the whole drag.
+    document.documentElement.classList.add("dnd-dragging");
     window.addEventListener("pointermove", this.move, { passive: false });
     window.addEventListener("pointerup", this.end);
     window.addEventListener("pointercancel", this.end);
   }
 
+  // pointermove fires far faster than paint on touch devices; capture the
+  // latest coords and reconcile once per frame so we never thrash reactivity.
   private move = (ev: PointerEvent) => {
     ev.preventDefault();
-    this.x = ev.clientX;
-    this.y = ev.clientY;
+    this.pendingX = ev.clientX;
+    this.pendingY = ev.clientY;
+    if (this.rafId) return;
+    this.rafId = requestAnimationFrame(this.flush);
+  };
 
-    const el = document.elementFromPoint(ev.clientX, ev.clientY);
+  private flush = () => {
+    this.rafId = 0;
+    if (this.taskId === null) return;
+
+    this.x = this.pendingX;
+    this.y = this.pendingY;
+
+    const el = document.elementFromPoint(this.pendingX, this.pendingY);
     const listEl = el?.closest<HTMLElement>("[data-dnd-list]");
     if (!listEl) return;
 
@@ -58,7 +78,7 @@ class Dnd {
     let idx = items.length;
     for (let i = 0; i < items.length; i++) {
       const r = items[i].getBoundingClientRect();
-      if (ev.clientY < r.top + r.height / 2) {
+      if (this.pendingY < r.top + r.height / 2) {
         idx = i;
         break;
       }
@@ -67,6 +87,11 @@ class Dnd {
   };
 
   private end = () => {
+    if (this.rafId) {
+      cancelAnimationFrame(this.rafId);
+      this.rafId = 0;
+    }
+    document.documentElement.classList.remove("dnd-dragging");
     window.removeEventListener("pointermove", this.move);
     window.removeEventListener("pointerup", this.end);
     window.removeEventListener("pointercancel", this.end);
