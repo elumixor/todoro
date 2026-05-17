@@ -1,6 +1,7 @@
 <script lang="ts">
   import { Plus, ChevronDown, ChevronUp } from "lucide-svelte";
   import type { Day, Task } from "$lib/api";
+  import { projects } from "$lib/projects.svelte";
   import TaskList from "./TaskList.svelte";
   import RichTaskInput from "./RichTaskInput.svelte";
 
@@ -31,7 +32,12 @@
   }
 
   const dayTasks = $derived(
-    day.tasks.filter((t) => !t.thisWeek).sort((a, b) => a.order - b.order),
+    day.tasks
+      .filter(
+        (t) =>
+          !t.thisWeek && (!projects.filterId || t.projectId === projects.filterId),
+      )
+      .sort((a, b) => a.order - b.order),
   );
   const completedCount = $derived(dayTasks.filter((t) => t.completed).length);
   const totalCount = $derived(dayTasks.length);

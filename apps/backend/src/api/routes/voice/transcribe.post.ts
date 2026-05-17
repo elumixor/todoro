@@ -41,14 +41,22 @@ export default handler(async ({ event }) => {
   const whisperForm = new FormData();
   whisperForm.append("file", audioFile);
   whisperForm.append("model", "whisper-1");
+  // verbose_json returns the detected language so we can pin the reply to it,
+  // instead of letting the chat model infer language from the (possibly
+  // mixed-language) task list.
+  whisperForm.append("response_format", "verbose_json");
 
   const transcriptionRes = await fetch(`${OPENAI_API}/audio/transcriptions`, {
     method: "POST",
     headers: { Authorization: `Bearer ${env.OPENAI_API_KEY}` },
     body: whisperForm,
   });
-  const transcription = (await transcriptionRes.json()) as { text?: string };
+  const transcription = (await transcriptionRes.json()) as {
+    text?: string;
+    language?: string;
+  };
   const spoken = (transcription.text ?? "").trim();
+  const language = transcription.language?.trim() || "the language the user spoke";
 
   if (!spoken) {
     return { transcription: "", message: null, days: await allDays() };
@@ -92,7 +100,8 @@ Rules:
 - A single utterance can map to multiple actions (e.g. add three tasks).
 - If the request is ambiguous or you cannot map it to any action, return
   "actions": [] and put a short clarifying question in "message".
-- "message" must be written in the SAME LANGUAGE the user spoke. Use it for
+- The user spoke ${language}. "message" MUST be written in ${language},
+  regardless of what language the existing task texts are in. Use it for
   clarifying questions, or a brief confirmation, or null if actions speak
   for themselves.
 

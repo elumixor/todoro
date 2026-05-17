@@ -127,25 +127,17 @@
   }
 
   function replaceQuery(html: string) {
-    if (!qNode) return;
+    if (!qNode || !editor) return;
+    // Select the typed "@query" then replace via execCommand so the edit
+    // lands on the browser's native undo stack (Ctrl/Cmd+Z works).
     const r = document.createRange();
     r.setStart(qNode, qStart);
     r.setEnd(qNode, qEnd);
-    r.deleteContents();
-    const tpl = document.createElement("template");
-    tpl.innerHTML = `${html} `;
-    const frag = tpl.content;
-    const lastNode = frag.lastChild;
-    r.insertNode(frag);
-    // Caret after the trailing space.
-    if (lastNode) {
-      const sel = window.getSelection();
-      const nr = document.createRange();
-      nr.setStartAfter(lastNode);
-      nr.collapse(true);
-      sel?.removeAllRanges();
-      sel?.addRange(nr);
-    }
+    const sel = window.getSelection();
+    sel?.removeAllRanges();
+    sel?.addRange(r);
+    editor.focus();
+    document.execCommand("insertHTML", false, `${html}&nbsp;`);
     close();
   }
 
@@ -198,7 +190,6 @@
     if (c.nodeType === Node.TEXT_NODE && editor.contains(c)) {
       const left = (c.textContent ?? "").slice(0, o);
       if (left.replace(/​/g, "").length > 0) return false; // real text → normal delete
-      if (left.length > 0) (c as Text).deleteData(0, left.length);
       prev = (c as ChildNode).previousSibling;
     } else if (c === editor) {
       prev = (editor.childNodes[o - 1] as ChildNode) ?? null;
@@ -213,19 +204,17 @@
     if (!(prev instanceof HTMLElement) || !prev.dataset.token) return false;
 
     const pill = prev;
-    const ref = pill.previousSibling;
-    const parent = pill.parentNode as Node;
-    const after = pill.nextSibling;
-    for (const k of kill) k.remove();
-    if (after && isBlank(after)) after.remove();
-    pill.remove();
-
-    const nr = document.createRange();
-    if (ref) nr.setStartAfter(ref);
-    else nr.setStart(parent, 0);
-    nr.collapse(true);
+    // Select [leading zwsp?][pill][blank nodes][caret] and delete via
+    // execCommand so the removal is on the native undo stack.
+    const lead = pill.previousSibling;
+    const del = document.createRange();
+    if (isBlank(lead)) del.setStartBefore(lead as Node);
+    else del.setStartBefore(pill);
+    del.setEnd(c, o);
     sel.removeAllRanges();
-    sel.addRange(nr);
+    sel.addRange(del);
+    editor.focus();
+    document.execCommand("delete");
     return true;
   }
 
