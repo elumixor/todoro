@@ -7,7 +7,9 @@
     "dev": "vite dev --host --port 3000",
     "build": "vite build",
     "preview": "vite preview",
-    "sync": "cap sync ios"
+    "sync": "cap sync ios",
+    "ios": "CAPACITOR_LIVE_RELOAD=true cap sync ios && cap open ios",
+    "ios:prod": "VITE_API_URL=https://todoro-backend.vercel.app vite build && cap sync ios && cap open ios"
   },
   "dependencies": {
     "backend": "workspace:*",

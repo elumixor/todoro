@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { CalendarPlus, Loader2, CheckCircle2 } from "lucide-svelte";
-  import { api, type Day, type Task } from "$lib/api/client";
+  import { api, type Day, type Task } from "$lib/api";
   import DayCard from "$lib/components/DayCard.svelte";
   import VoiceButton from "$lib/components/VoiceButton.svelte";
   import ThemeToggle from "$lib/components/ThemeToggle.svelte";

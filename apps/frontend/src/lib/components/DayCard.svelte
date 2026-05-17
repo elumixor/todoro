@@ -1,6 +1,6 @@
 <script lang="ts">
   import { Plus, ChevronDown, ChevronUp } from "lucide-svelte";
-  import type { Day, Task } from "$lib/api/client";
+  import type { Day, Task } from "$lib/api";
   import TaskItem from "./TaskItem.svelte";
 
   let {

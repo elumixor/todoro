@@ -11,3 +11,13 @@ generated/
 build/
 .DS_Store
 bun.lock
+
+# Capacitor
+apps/frontend/android/
+apps/frontend/ios/App/App/public/
+apps/frontend/ios/App/DerivedData/
+apps/frontend/ios/App/build/
+apps/frontend/ios/App/Pods/
+apps/frontend/ios/**/xcuserdata/
+apps/frontend/ios/App/App/capacitor.config.json
+apps/frontend/ios/App/App/config.xml

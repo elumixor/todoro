@@ -1,6 +1,6 @@
 <script lang="ts">
   import { Check, Trash2, Pencil } from "lucide-svelte";
-  import type { Task } from "$lib/api/client";
+  import type { Task } from "$lib/api";
 
   let {
     task,
