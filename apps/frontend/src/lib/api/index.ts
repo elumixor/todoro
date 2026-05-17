@@ -1,2 +1,2 @@
 export { api } from "./client";
-export type { Day, Task } from "./types";
+export type { Day, Project, Task } from "./types";

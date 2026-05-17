@@ -2,6 +2,7 @@
   import { Plus, ChevronDown, ChevronUp } from "lucide-svelte";
   import type { Day, Task } from "$lib/api";
   import TaskList from "./TaskList.svelte";
+  import RichTaskInput from "./RichTaskInput.svelte";
 
   let {
     day,
@@ -21,16 +22,12 @@
     onDuplicateTask: (task: Task) => void;
   } = $props();
 
-  let newTaskText = $state("");
   let collapsed = $state(!isToday);
-  let inputEl: HTMLInputElement | undefined = $state();
+  let addInput: RichTaskInput | undefined = $state();
 
-  function handleSubmit(e: Event) {
-    e.preventDefault();
-    if (!newTaskText.trim()) return;
-    onAddTask(day.id, newTaskText.trim());
-    newTaskText = "";
-    inputEl?.focus();
+  function submitNew(text: string) {
+    onAddTask(day.id, text);
+    addInput?.clear();
   }
 
   const dayTasks = $derived(
@@ -101,26 +98,23 @@
 
     <!-- Add task input -->
     {#if isToday}
-      <form onsubmit={handleSubmit} class="flex gap-2 mt-3">
-        <input
-          bind:this={inputEl}
-          type="text"
-          bind:value={newTaskText}
-          placeholder="What needs doing?"
-          class="flex-1 px-4 py-3 rounded-2xl bg-[var(--color-surface)] text-[13px] font-light tracking-wide
-            border border-[var(--color-border)] focus:border-[var(--color-accent)] focus:bg-[var(--color-surface-2)]
-            focus:outline-none placeholder:text-[var(--color-ink-3)]
-            transition-all duration-300"
+      <div class="flex gap-2 mt-3 items-start">
+        <RichTaskInput
+          bind:this={addInput}
+          placeholder="What needs doing?  (@ for project, date, duration)"
+          onsubmit={submitNew}
         />
         <button
-          type="submit"
-          class="w-11 h-11 rounded-2xl bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)]
-            flex items-center justify-center transition-all duration-300
+          type="button"
+          onclick={() => addInput?.submit()}
+          aria-label="Add task"
+          class="w-11 h-[46px] rounded-2xl bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)]
+            flex items-center justify-center transition-all duration-300 shrink-0
             hover:shadow-lg hover:shadow-[var(--color-accent-glow)] active:scale-95"
         >
           <Plus size={18} strokeWidth={2.5} class="text-[var(--color-bg)]" />
         </button>
-      </form>
+      </div>
     {/if}
   {/if}
 </section>

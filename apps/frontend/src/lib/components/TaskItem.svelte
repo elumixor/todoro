@@ -3,6 +3,8 @@
   import type { Task } from "$lib/api";
   import { dnd } from "$lib/dnd.svelte";
   import { notifySuccess, notifyWarning, tapLight, tapMedium } from "$lib/haptics";
+  import TaskContent from "./TaskContent.svelte";
+  import RichTaskInput from "./RichTaskInput.svelte";
 
   let {
     task,
@@ -33,26 +35,15 @@
   }
 
   let editing = $state(false);
-  let editText = $state(task.text);
-  let inputEl: HTMLInputElement | undefined = $state();
 
   function startEdit() {
-    editText = task.text;
     editing = true;
-    requestAnimationFrame(() => inputEl?.focus());
   }
 
-  function commitEdit() {
-    const trimmed = editText.trim();
-    if (trimmed && trimmed !== task.text) {
-      onEdit(task, trimmed);
-    }
+  function commitEdit(text: string) {
+    const trimmed = text.trim();
+    if (trimmed && trimmed !== task.text) onEdit(task, trimmed);
     editing = false;
-  }
-
-  function handleKeydown(e: KeyboardEvent) {
-    if (e.key === "Enter") commitEdit();
-    if (e.key === "Escape") editing = false;
   }
 
   // Tap text to edit; long-press (or right-click) opens the action menu.
@@ -164,18 +155,16 @@
 
   <!-- Text / Edit -->
   {#if editing}
-    <input
-      bind:this={inputEl}
-      bind:value={editText}
-      onblur={commitEdit}
-      onkeydown={handleKeydown}
-      class="flex-1 bg-transparent text-[13px] font-light tracking-wide outline-none
-        border-b border-[var(--color-accent)] pb-0.5 text-[var(--color-ink)]"
+    <RichTaskInput
+      value={task.text}
+      autofocus
+      submitOnBlur
+      placeholder="Edit task"
+      onsubmit={commitEdit}
     />
   {:else}
     <span
-      class="flex-1 text-[13px] font-light tracking-wide transition-all duration-300 cursor-text select-none
-        {task.completed ? 'line-through text-[var(--color-ink-3)]' : 'text-[var(--color-ink)]'}"
+      class="flex-1 min-w-0"
       onpointerdown={handleTextPointerDown}
       onpointermove={handleTextPointerMove}
       onpointerup={clearLp}
@@ -184,7 +173,7 @@
       role="textbox"
       tabindex="0"
     >
-      {task.text}
+      <TaskContent {task} dimmed={task.completed} />
     </span>
   {/if}
 
