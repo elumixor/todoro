@@ -40,6 +40,14 @@
   margin-bottom: env(safe-area-inset-bottom, 0px);
 }
 
+/* Suppress the iOS long-press magnifier loupe + text selection so a
+   long-press opens our menu instead of selecting the page. */
+@utility no-touch-select {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
 /* ── Light theme ──────────────────────────────────────────────── */
 html.light {
   --color-bg: oklch(97% 0.006 280);
@@ -180,7 +188,7 @@ html.dnd-dragging * {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  vertical-align: baseline;
+  vertical-align: middle;
   padding: 1px 7px 1px 5px;
   margin: 0 1px;
   border-radius: 7px;
@@ -229,7 +237,12 @@ html.light .pill-dur { color: oklch(45% 0.12 280); }
   color: var(--color-ink-3);
   pointer-events: none;
 }
-.rich-input { white-space: pre-wrap; word-break: break-word; }
+.rich-input {
+  white-space: pre-wrap;
+  word-break: break-word;
+  caret-color: var(--color-accent);
+  line-height: 1.7;
+}
 
 emoji-picker {
   --background: var(--color-surface-2);

@@ -65,7 +65,7 @@
       }
     };
     walk(editor);
-    return out.replace(/\s+/g, " ").trim();
+    return out.replace(/​/g, "").replace(/\s+/g, " ").trim();
   }
 
   function close() {
@@ -196,7 +196,11 @@
   }
 
   async function onInput() {
-    if (editor && editor.textContent === "" && !editor.querySelector("[data-token]"))
+    if (
+      editor &&
+      (editor.textContent ?? "").replace(/​/g, "") === "" &&
+      !editor.querySelector("[data-token]")
+    )
       editor.innerHTML = "";
     await tick();
     detectQuery();
@@ -225,7 +229,7 @@
 
   {#if open}
     <div
-      class="absolute left-0 right-0 top-[calc(100%+6px)] z-50 max-h-64 overflow-y-auto py-1.5
+      class="absolute left-0 right-0 bottom-[calc(100%+6px)] z-50 max-h-64 overflow-y-auto py-1.5
         rounded-2xl bg-[var(--color-surface-2)] border border-[var(--color-border)]
         shadow-xl shadow-black/40 animate-fade-in"
     >

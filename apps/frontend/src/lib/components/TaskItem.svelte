@@ -51,17 +51,30 @@
   let menuOpen = $state(false);
   let menuX = $state(0);
   let menuY = $state(0);
+  let menuEl: HTMLDivElement | undefined = $state();
   let lpTimer: ReturnType<typeof setTimeout> | null = null;
   let lpFired = false;
   let downX = 0;
   let downY = 0;
 
   function openMenu(x: number, y: number) {
-    menuX = Math.min(x, window.innerWidth - 168);
-    menuY = Math.min(y, window.innerHeight - 148);
+    menuX = x;
+    menuY = y;
     menuOpen = true;
     tapMedium();
   }
+
+  // Clamp into the viewport after the menu has rendered, so it can never
+  // spill off the right/bottom edge regardless of where the press landed.
+  $effect(() => {
+    if (!menuOpen || !menuEl) return;
+    const pad = 8;
+    const r = menuEl.getBoundingClientRect();
+    const nx = Math.max(pad, Math.min(menuX, window.innerWidth - r.width - pad));
+    const ny = Math.max(pad, Math.min(menuY, window.innerHeight - r.height - pad));
+    if (nx !== menuX) menuX = nx;
+    if (ny !== menuY) menuY = ny;
+  });
 
   function clearLp() {
     if (lpTimer) {
@@ -164,7 +177,7 @@
     />
   {:else}
     <span
-      class="flex-1 min-w-0"
+      class="flex-1 min-w-0 no-touch-select"
       onpointerdown={handleTextPointerDown}
       onpointermove={handleTextPointerMove}
       onpointerup={clearLp}
@@ -207,7 +220,8 @@
     onpointerdown={() => (menuOpen = false)}
   ></button>
   <div
-    class="fixed z-50 min-w-[160px] py-1.5 rounded-2xl bg-[var(--color-surface-2)]
+    bind:this={menuEl}
+    class="fixed z-50 w-44 py-1.5 rounded-2xl bg-[var(--color-surface-2)] no-touch-select
       border border-[var(--color-border)] shadow-xl shadow-black/40 animate-fade-in"
     style="left: {menuX}px; top: {menuY}px;"
   >
