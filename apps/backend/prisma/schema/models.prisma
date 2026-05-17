@@ -10,6 +10,7 @@ model Task {
   text      String
   completed Boolean  @default(false)
   order     Int      @default(0)
+  thisWeek  Boolean  @default(false)
   day       Day      @relation(fields: [dayId], references: [id], onDelete: Cascade)
   dayId     String
   createdAt DateTime @default(now())

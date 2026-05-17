@@ -1,7 +1,7 @@
 <script lang="ts">
   import { Plus, ChevronDown, ChevronUp } from "lucide-svelte";
   import type { Day, Task } from "$lib/api";
-  import TaskItem from "./TaskItem.svelte";
+  import TaskList from "./TaskList.svelte";
 
   let {
     day,
@@ -31,8 +31,11 @@
     inputEl?.focus();
   }
 
-  const completedCount = $derived(day.tasks.filter((t) => t.completed).length);
-  const totalCount = $derived(day.tasks.length);
+  const dayTasks = $derived(
+    day.tasks.filter((t) => !t.thisWeek).sort((a, b) => a.order - b.order),
+  );
+  const completedCount = $derived(dayTasks.filter((t) => t.completed).length);
+  const totalCount = $derived(dayTasks.length);
   const progress = $derived(totalCount > 0 ? (completedCount / totalCount) * 100 : 0);
   const allDone = $derived(totalCount > 0 && completedCount === totalCount);
 
@@ -85,17 +88,13 @@
 
   <!-- Tasks -->
   {#if !collapsed}
-    <ul class="space-y-1.5">
-      {#each day.tasks as task, i (task.id)}
-        <TaskItem
-          {task}
-          index={i}
-          onToggle={onToggleTask}
-          onDelete={onDeleteTask}
-          onEdit={onEditTask}
-        />
-      {/each}
-    </ul>
+    <TaskList
+      tasks={dayTasks}
+      listId={day.id}
+      {onToggleTask}
+      {onDeleteTask}
+      {onEditTask}
+    />
 
     <!-- Add task input -->
     {#if isToday}

@@ -1,20 +1,32 @@
 <script lang="ts">
-  import { Check, Trash2, Pencil } from "lucide-svelte";
+  import { Check, Trash2, Pencil, GripVertical } from "lucide-svelte";
   import type { Task } from "$lib/api";
+  import { dnd } from "$lib/dnd.svelte";
 
   let {
     task,
     index,
+    listId,
     onToggle,
     onDelete,
     onEdit,
   }: {
     task: Task;
     index: number;
+    listId: string;
     onToggle: (task: Task) => void;
     onDelete: (task: Task) => void;
     onEdit: (task: Task, text: string) => void;
   } = $props();
+
+  let el: HTMLLIElement | undefined = $state();
+  const isDragging = $derived(dnd.taskId === task.id);
+
+  function handleGripDown(e: PointerEvent) {
+    e.preventDefault();
+    const width = el?.getBoundingClientRect().width ?? 0;
+    dnd.start(task.id, task.text, listId, e, width);
+  }
 
   let editing = $state(false);
   let editText = $state(task.text);
@@ -48,13 +60,26 @@
 </script>
 
 <li
-  class="group flex items-center gap-3.5 px-4 py-3.5 rounded-2xl transition-all duration-300
+  bind:this={el}
+  data-dnd-item={task.id}
+  class="group flex items-center gap-2.5 px-4 py-3.5 rounded-2xl transition-all duration-300
     {task.completed
     ? 'bg-[var(--color-done)]'
     : 'bg-[var(--color-surface)] hover:bg-[var(--color-surface-2)]'}
-    animate-fade-up"
+    {isDragging ? 'opacity-30' : 'animate-fade-up'}"
   style="animation-delay: {index * 50}ms"
 >
+  <!-- Drag handle -->
+  <button
+    onpointerdown={handleGripDown}
+    aria-label="Reorder task"
+    class="-ml-1 p-0.5 rounded-md text-[var(--color-ink-3)] hover:text-[var(--color-ink-2)]
+      touch-none cursor-grab active:cursor-grabbing shrink-0
+      opacity-40 group-hover:opacity-100 transition-opacity"
+  >
+    <GripVertical size={14} />
+  </button>
+
   <!-- Checkbox -->
   <button
     onclick={handleToggle}

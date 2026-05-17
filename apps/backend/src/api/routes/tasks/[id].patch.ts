@@ -8,6 +8,7 @@ export default handler(
       text: z.string().min(1).optional(),
       completed: z.boolean().optional(),
       order: z.number().optional(),
+      thisWeek: z.boolean().optional(),
     },
   },
   ({ router, body }) =>
