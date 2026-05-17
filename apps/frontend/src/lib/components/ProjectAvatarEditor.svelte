@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { Shuffle, Smile, ImagePlus } from "lucide-svelte";
+  import { Shuffle, Smile, ImagePlus, Trash2 } from "lucide-svelte";
   import type { Project } from "$lib/api";
   import { projects } from "$lib/projects.svelte";
   import ProjectAvatar from "./ProjectAvatar.svelte";
@@ -8,6 +8,13 @@
   let { project, onClose }: { project: Project; onClose: () => void } = $props();
 
   let tab = $state<"auto" | "emoji" | "image">(project.avatarType as "auto" | "emoji" | "image");
+  let confirmDelete = $state(false);
+
+  async function remove() {
+    busy = true;
+    await projects.remove(project.id);
+    onClose();
+  }
   let pickerHost: HTMLDivElement | undefined = $state();
   let fileEl: HTMLInputElement | undefined = $state();
   let busy = $state(false);
@@ -103,4 +110,33 @@
   >
     Done
   </button>
+
+  {#if confirmDelete}
+    <div class="flex items-center gap-2">
+      <button
+        onclick={remove}
+        disabled={busy}
+        class="flex-1 py-2.5 rounded-2xl bg-[var(--color-danger)] text-white text-[13px] font-medium
+          active:scale-[0.98] transition-transform disabled:opacity-50"
+      >
+        Delete “{project.name}”
+      </button>
+      <button
+        onclick={() => (confirmDelete = false)}
+        class="px-4 py-2.5 rounded-2xl bg-[var(--color-surface)] text-[13px] font-medium
+          text-[var(--color-ink-2)]"
+      >
+        Cancel
+      </button>
+    </div>
+  {:else}
+    <button
+      onclick={() => (confirmDelete = true)}
+      class="w-full flex items-center justify-center gap-2 py-2 text-[12px] font-medium
+        text-[var(--color-ink-3)] hover:text-[var(--color-danger)] transition-colors"
+    >
+      <Trash2 size={13} />
+      Delete project
+    </button>
+  {/if}
 </div>
