@@ -6,6 +6,18 @@
   import { pillElement, renderEditorHtml } from "$lib/pillHtml";
   import { suggestTokens, type Segment, type Suggestion } from "$lib/tokens";
 
+  // Move the element to <body> so position:fixed is viewport-relative even
+  // when an ancestor has a transform (animate-fade-up creates a containing
+  // block that would otherwise trap it behind later task cards).
+  function portal(node: HTMLElement) {
+    document.body.appendChild(node);
+    return {
+      destroy() {
+        node.remove();
+      },
+    };
+  }
+
   let {
     value = "",
     placeholder = "",
@@ -28,16 +40,26 @@
     | { kind: "token"; sug: Suggestion };
 
   let open = $state(false);
-  let placeAbove = $state(true);
   let items = $state<Item[]>([]);
   let active = $state(0);
+  // Fixed-position style so the picker escapes every ancestor stacking
+  // context (task cards/items create their own via transforms).
+  let pickerStyle = $state("");
 
-  // Flip the picker above/below depending on available room.
   $effect(() => {
+    // re-run on open / items change
+    void items.length;
     if (!open || !editor) return;
     const rect = editor.getBoundingClientRect();
+    const gap = 6;
+    const maxH = 256;
     const below = window.innerHeight - rect.bottom;
-    placeAbove = below < 280 && rect.top > below;
+    const above = rect.top;
+    const placeAbove = below < maxH + gap && above > below;
+    const vert = placeAbove
+      ? `bottom:${Math.round(window.innerHeight - rect.top + gap)}px`
+      : `top:${Math.round(rect.bottom + gap)}px`;
+    pickerStyle = `left:${Math.round(rect.left)}px;width:${Math.round(rect.width)}px;${vert}`;
   });
   // Caret context for replacing the typed "@query".
   let qNode: Text | null = null;
@@ -280,11 +302,11 @@
 
   {#if open}
     <div
-      class="absolute left-0 right-0 {placeAbove
-        ? 'bottom-[calc(100%+6px)]'
-        : 'top-[calc(100%+6px)]'} z-50 max-h-64 overflow-y-auto py-1.5
+      use:portal
+      class="fixed z-[200] max-h-64 overflow-y-auto py-1.5
         rounded-2xl bg-[var(--color-surface-2)] border border-[var(--color-border)]
         shadow-xl shadow-black/40 animate-fade-in"
+      style={pickerStyle}
     >
       {#each items as item, i (i)}
         <button
