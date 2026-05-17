@@ -21,3 +21,6 @@ apps/frontend/ios/App/Pods/
 apps/frontend/ios/**/xcuserdata/
 apps/frontend/ios/App/App/capacitor.config.json
 apps/frontend/ios/App/App/config.xml
+
+# Playwright MCP
+.playwright-mcp/
