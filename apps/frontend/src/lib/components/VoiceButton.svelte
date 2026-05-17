@@ -1,5 +1,6 @@
 <script lang="ts">
   import { Mic, Square } from "lucide-svelte";
+  import { tapMedium } from "$lib/haptics";
 
   let { onRecorded }: { onRecorded: (blob: Blob) => void } = $props();
   let recording = $state(false);
@@ -9,6 +10,7 @@
   let timer: ReturnType<typeof setInterval> | null = null;
 
   async function toggle() {
+    tapMedium();
     if (recording) {
       mediaRecorder?.stop();
       recording = false;

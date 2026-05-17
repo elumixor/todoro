@@ -1,6 +1,8 @@
 // Pointer-based drag & drop shared state. Works for both touch (iOS) and mouse.
 // Lists register via `data-dnd-list="<id>"`, items via `data-dnd-item="<taskId>"`.
 
+import { selection, tapMedium } from "$lib/haptics";
+
 interface DropPayload {
   taskId: string;
   from: string;
@@ -67,6 +69,8 @@ class Dnd {
     const listEl = el?.closest<HTMLElement>("[data-dnd-list]");
     if (!listEl) return;
 
+    const prevList = this.overList;
+    const prevIndex = this.overIndex;
     this.overList = listEl.dataset.dndList ?? null;
 
     // Items excluding the one being dragged, so the index maps directly onto
@@ -84,6 +88,9 @@ class Dnd {
       }
     }
     this.overIndex = idx;
+
+    // Tick whenever the drop slot moves so the drag feels physical.
+    if (this.overList !== prevList || this.overIndex !== prevIndex) selection();
   };
 
   private end = () => {
@@ -97,6 +104,7 @@ class Dnd {
     window.removeEventListener("pointercancel", this.end);
 
     if (this.taskId && this.fromList && this.overList && this.onDrop) {
+      tapMedium();
       this.onDrop({
         taskId: this.taskId,
         from: this.fromList,

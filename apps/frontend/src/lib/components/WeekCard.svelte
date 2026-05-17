@@ -8,11 +8,13 @@
     onToggleTask,
     onDeleteTask,
     onEditTask,
+    onDuplicateTask,
   }: {
     tasks: Task[];
     onToggleTask: (task: Task) => void;
     onDeleteTask: (task: Task) => void;
     onEditTask: (task: Task, text: string) => void;
+    onDuplicateTask: (task: Task) => void;
   } = $props();
 
   const completedCount = $derived(tasks.filter((t) => t.completed).length);
@@ -37,5 +39,6 @@
     {onToggleTask}
     {onDeleteTask}
     {onEditTask}
+    {onDuplicateTask}
   />
 </section>

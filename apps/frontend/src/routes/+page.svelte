@@ -112,6 +112,14 @@
     }));
   }
 
+  async function handleDuplicateTask(task: Task) {
+    let created = await api.tasks.$post({ dayId: task.dayId, text: task.text });
+    if (task.thisWeek) created = await api.tasks(created.id).$patch({ thisWeek: true });
+    days = days.map((d) =>
+      d.id === created.dayId ? { ...d, tasks: [...d.tasks, created] } : d,
+    );
+  }
+
   async function handleVoiceRecorded(blob: Blob) {
     voiceLoading = true;
     try {
@@ -193,6 +201,7 @@
         onToggleTask={handleToggleTask}
         onDeleteTask={handleDeleteTask}
         onEditTask={handleEditTask}
+        onDuplicateTask={handleDuplicateTask}
       />
 
       <div class="border-t border-[var(--color-border)] mx-8"></div>
@@ -206,6 +215,7 @@
             onToggleTask={handleToggleTask}
             onDeleteTask={handleDeleteTask}
             onEditTask={handleEditTask}
+            onDuplicateTask={handleDuplicateTask}
           />
         </div>
 

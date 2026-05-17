@@ -10,6 +10,7 @@
     onToggleTask,
     onDeleteTask,
     onEditTask,
+    onDuplicateTask,
   }: {
     day: Day;
     isToday: boolean;
@@ -17,6 +18,7 @@
     onToggleTask: (task: Task) => void;
     onDeleteTask: (task: Task) => void;
     onEditTask: (task: Task, text: string) => void;
+    onDuplicateTask: (task: Task) => void;
   } = $props();
 
   let newTaskText = $state("");
@@ -94,6 +96,7 @@
       {onToggleTask}
       {onDeleteTask}
       {onEditTask}
+      {onDuplicateTask}
     />
 
     <!-- Add task input -->

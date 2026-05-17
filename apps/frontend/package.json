@@ -13,10 +13,11 @@
     "ios:prod": "VITE_API_URL=https://eos-backend-todoroappatma-4183s-projects.vercel.app vite build && cap sync ios && cap open ios"
   },
   "dependencies": {
-    "backend": "workspace:*",
     "@capacitor/app": "^8.0.1",
     "@capacitor/core": "^8",
+    "@capacitor/haptics": "^8",
     "@capacitor/ios": "^8",
+    "backend": "workspace:*",
     "lucide-svelte": "^1.0.1"
   },
   "devDependencies": {

@@ -10,6 +10,7 @@
     onToggleTask,
     onDeleteTask,
     onEditTask,
+    onDuplicateTask,
   }: {
     tasks: Task[];
     listId: string;
@@ -17,6 +18,7 @@
     onToggleTask: (task: Task) => void;
     onDeleteTask: (task: Task) => void;
     onEditTask: (task: Task, text: string) => void;
+    onDuplicateTask: (task: Task) => void;
   } = $props();
 
   const isOver = $derived(dnd.active && dnd.overList === listId);
@@ -40,6 +42,7 @@
       onToggle={onToggleTask}
       onDelete={onDeleteTask}
       onEdit={onEditTask}
+      onDuplicate={onDuplicateTask}
     />
   {/each}
 

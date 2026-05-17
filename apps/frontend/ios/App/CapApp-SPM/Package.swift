@@ -12,7 +12,8 @@ let package = Package(
     ],
     dependencies: [
         .package(url: "https://github.com/ionic-team/capacitor-swift-pm.git", exact: "8.3.0"),
-        .package(name: "CapacitorApp", path: "../../../../../node_modules/.bun/@capacitor+app@8.1.0+db0c1b46371b240c/node_modules/@capacitor/app")
+        .package(name: "CapacitorApp", path: "../../../../../node_modules/.bun/@capacitor+app@8.1.0+db0c1b46371b240c/node_modules/@capacitor/app"),
+        .package(name: "CapacitorHaptics", path: "../../../../../node_modules/.bun/@capacitor+haptics@8.0.2+db0c1b46371b240c/node_modules/@capacitor/haptics")
     ],
     targets: [
         .target(
@@ -20,7 +21,8 @@ let package = Package(
             dependencies: [
                 .product(name: "Capacitor", package: "capacitor-swift-pm"),
                 .product(name: "Cordova", package: "capacitor-swift-pm"),
-                .product(name: "CapacitorApp", package: "CapacitorApp")
+                .product(name: "CapacitorApp", package: "CapacitorApp"),
+                .product(name: "CapacitorHaptics", package: "CapacitorHaptics")
             ]
         )
     ]
