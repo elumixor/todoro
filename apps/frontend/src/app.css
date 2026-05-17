@@ -93,7 +93,13 @@ body {
   position: relative;
 }
 
-/* Subtle noise texture overlay */
+/* Subtle noise texture overlay.
+   The SVG feTurbulence is expensive on iOS WebKit and gets re-rasterized at
+   full device resolution on every compositing change (e.g. opening the
+   long-press menu) — causing multi-second hangs. Isolating it onto its own
+   GPU layer (translateZ + will-change + contain) makes WebKit paint it once
+   and keep it cached instead of recomputing the filter on every recomposite.
+   numOctaves is also dropped 4 → 2; visually indistinguishable at 3% opacity. */
 body::before {
   content: "";
   position: fixed;
@@ -101,9 +107,12 @@ body::before {
   z-index: 9999;
   pointer-events: none;
   opacity: 0.03;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   background-repeat: repeat;
   background-size: 256px 256px;
+  transform: translateZ(0);
+  will-change: transform;
+  contain: strict;
 }
 
 /* While a drag is in progress, kill native selection / iOS callout so a

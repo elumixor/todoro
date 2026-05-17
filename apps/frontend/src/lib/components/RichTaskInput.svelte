@@ -28,8 +28,17 @@
     | { kind: "token"; sug: Suggestion };
 
   let open = $state(false);
+  let placeAbove = $state(true);
   let items = $state<Item[]>([]);
   let active = $state(0);
+
+  // Flip the picker above/below depending on available room.
+  $effect(() => {
+    if (!open || !editor) return;
+    const rect = editor.getBoundingClientRect();
+    const below = window.innerHeight - rect.bottom;
+    placeAbove = below < 280 && rect.top > below;
+  });
   // Caret context for replacing the typed "@query".
   let qNode: Text | null = null;
   let qStart = 0;
@@ -172,6 +181,54 @@
   }
   export { submit };
 
+  const isBlank = (n: Node | null | undefined) =>
+    !!n && n.nodeType === Node.TEXT_NODE && (n.textContent ?? "").replace(/​/g, "") === "";
+
+  // Delete a whole pill (and its surrounding zero-width spaces) in one
+  // Backspace press when the caret sits just after it.
+  function killPillBackward(): boolean {
+    const sel = window.getSelection();
+    if (!sel || !sel.rangeCount || !sel.isCollapsed || !editor) return false;
+    const r = sel.getRangeAt(0);
+    const c = r.startContainer;
+    const o = r.startOffset;
+    const kill: ChildNode[] = [];
+    let prev: ChildNode | null = null;
+
+    if (c.nodeType === Node.TEXT_NODE && editor.contains(c)) {
+      const left = (c.textContent ?? "").slice(0, o);
+      if (left.replace(/​/g, "").length > 0) return false; // real text → normal delete
+      if (left.length > 0) (c as Text).deleteData(0, left.length);
+      prev = (c as ChildNode).previousSibling;
+    } else if (c === editor) {
+      prev = (editor.childNodes[o - 1] as ChildNode) ?? null;
+    } else {
+      return false;
+    }
+
+    while (isBlank(prev)) {
+      kill.push(prev as ChildNode);
+      prev = (prev as ChildNode).previousSibling;
+    }
+    if (!(prev instanceof HTMLElement) || !prev.dataset.token) return false;
+
+    const pill = prev;
+    const ref = pill.previousSibling;
+    const parent = pill.parentNode as Node;
+    const after = pill.nextSibling;
+    for (const k of kill) k.remove();
+    if (after && isBlank(after)) after.remove();
+    pill.remove();
+
+    const nr = document.createRange();
+    if (ref) nr.setStartAfter(ref);
+    else nr.setStart(parent, 0);
+    nr.collapse(true);
+    sel.removeAllRanges();
+    sel.addRange(nr);
+    return true;
+  }
+
   function onKeydown(e: KeyboardEvent) {
     if (open) {
       if (e.key === "ArrowDown") {
@@ -187,6 +244,11 @@
         e.preventDefault();
         close();
       }
+      return;
+    }
+    if (e.key === "Backspace" && killPillBackward()) {
+      e.preventDefault();
+      onInput();
       return;
     }
     if (e.key === "Enter") {
@@ -229,7 +291,9 @@
 
   {#if open}
     <div
-      class="absolute left-0 right-0 bottom-[calc(100%+6px)] z-50 max-h-64 overflow-y-auto py-1.5
+      class="absolute left-0 right-0 {placeAbove
+        ? 'bottom-[calc(100%+6px)]'
+        : 'top-[calc(100%+6px)]'} z-50 max-h-64 overflow-y-auto py-1.5
         rounded-2xl bg-[var(--color-surface-2)] border border-[var(--color-border)]
         shadow-xl shadow-black/40 animate-fade-in"
     >

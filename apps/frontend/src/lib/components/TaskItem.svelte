@@ -6,6 +6,14 @@
   import TaskContent from "./TaskContent.svelte";
   import RichTaskInput from "./RichTaskInput.svelte";
 
+  // Move a node to <body> so `position: fixed` resolves against the viewport.
+  // Task rows keep a `transform` (animate-fade-up, fill-mode: both), which
+  // would otherwise become the containing block for the fixed menu.
+  function portal(node: HTMLElement) {
+    document.body.appendChild(node);
+    return { destroy: () => node.remove() };
+  }
+
   let {
     task,
     index,
@@ -190,16 +198,9 @@
     </span>
   {/if}
 
-  <!-- Actions -->
-  <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-    {#if !task.completed && !editing}
-      <button
-        onclick={startEdit}
-        class="p-1.5 rounded-lg hover:bg-[var(--color-surface-3)] transition-colors"
-      >
-        <Pencil size={13} class="text-[var(--color-ink-3)]" />
-      </button>
-    {/if}
+  <!-- Desktop-only quick delete. On touch, delete lives in the long-press
+       menu; editing is tap-on-text everywhere, so no inline edit button. -->
+  <div class="hidden pointer-fine:flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
     <button
       onclick={() => {
         notifyWarning();
@@ -213,6 +214,7 @@
 </li>
 
 {#if menuOpen}
+  <div use:portal>
   <!-- Backdrop closes the menu on any outside interaction -->
   <button
     aria-label="Close menu"
@@ -252,5 +254,6 @@
       <Trash2 size={14} />
       Delete
     </button>
+  </div>
   </div>
 {/if}
