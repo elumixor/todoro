@@ -1,7 +1,7 @@
 {
   "framework": null,
   "installCommand": "cd ../.. && bun install",
-  "buildCommand": "bun run build",
+  "buildCommand": "cd ../backend && bun run client:generate && cd ../frontend && VITE_API_URL=https://eos-backend-todoroappatma-4183s-projects.vercel.app bun run build",
   "outputDirectory": "build",
   "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
 }
