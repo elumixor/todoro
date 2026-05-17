@@ -8,6 +8,7 @@
   import DayCard from "$lib/components/DayCard.svelte";
   import WeekCard from "$lib/components/WeekCard.svelte";
   import FilterBar from "$lib/components/FilterBar.svelte";
+  import TaskContent from "$lib/components/TaskContent.svelte";
   import VoiceButton from "$lib/components/VoiceButton.svelte";
   import ThemeToggle from "$lib/components/ThemeToggle.svelte";
 
@@ -29,6 +30,10 @@
       .flatMap((d) => d.tasks)
       .filter((t) => t.thisWeek && matchesFilter(t))
       .sort((a, b) => a.order - b.order),
+  );
+
+  const draggedTask = $derived(
+    dnd.taskId ? days.flatMap((d) => d.tasks).find((t) => t.id === dnd.taskId) : undefined,
   );
 
   onMount(async () => {
@@ -298,6 +303,10 @@
     style="left: {dnd.x}px; top: {dnd.y}px; width: {dnd.width}px;
       transform: translate(-28px, -50%);"
   >
-    {dnd.label}
+    {#if draggedTask}
+      <TaskContent task={draggedTask} />
+    {:else}
+      {dnd.label}
+    {/if}
   </div>
 {/if}
