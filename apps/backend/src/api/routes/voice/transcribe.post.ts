@@ -1,8 +1,32 @@
 import { env } from "env";
 import { readFormData } from "h3";
+import { prisma } from "services/prisma";
 import { handler } from "utils";
 
 const OPENAI_API = "https://api.openai.com/v1";
+
+function todayDate() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+async function getOrCreateToday() {
+  const date = todayDate();
+  return (await prisma.day.findUnique({ where: { date } })) ?? (await prisma.day.create({ data: { date } }));
+}
+
+function allDays() {
+  return prisma.day.findMany({
+    include: { tasks: { orderBy: { order: "asc" } } },
+    orderBy: { date: "desc" },
+  });
+}
+
+interface Action {
+  op: "create" | "complete" | "uncomplete" | "delete" | "edit";
+  id?: string;
+  text?: string;
+  thisWeek?: boolean;
+}
 
 export default handler(async ({ event }) => {
   const formData = await readFormData(event);
@@ -12,7 +36,8 @@ export default handler(async ({ event }) => {
     throw new Error("No audio file provided");
   }
 
-  // Transcribe with Whisper
+  // 1. Transcribe with Whisper. It auto-detects the spoken language, so any
+  //    language works without configuration.
   const whisperForm = new FormData();
   whisperForm.append("file", audioFile);
   whisperForm.append("model", "whisper-1");
@@ -22,9 +47,58 @@ export default handler(async ({ event }) => {
     headers: { Authorization: `Bearer ${env.OPENAI_API_KEY}` },
     body: whisperForm,
   });
-  const transcription = (await transcriptionRes.json()) as { text: string };
+  const transcription = (await transcriptionRes.json()) as { text?: string };
+  const spoken = (transcription.text ?? "").trim();
 
-  // Use GPT to parse tasks from transcription
+  if (!spoken) {
+    return { transcription: "", message: null, days: await allDays() };
+  }
+
+  // 2. Give the model the current task lists (with ids) so it can act on
+  //    them, then ask it for a list of mutations to apply.
+  const today = await getOrCreateToday();
+  const days = await allDays();
+  const flat = days.flatMap((d) => d.tasks);
+  const weekTasks = flat.filter((t) => t.thisWeek);
+  const todayTasks = flat.filter((t) => t.dayId === today.id && !t.thisWeek);
+
+  const fmt = (t: { id: string; text: string; completed: boolean }) =>
+    `- [${t.completed ? "x" : " "}] (id: ${t.id}) ${t.text}`;
+
+  const context = [
+    `Today's tasks:\n${todayTasks.map(fmt).join("\n") || "(none)"}`,
+    `This week's tasks:\n${weekTasks.map(fmt).join("\n") || "(none)"}`,
+  ].join("\n\n");
+
+  const systemPrompt = `You are the assistant for Eos, a daily to-do app.
+The user gave a voice command (transcribed below, in their own language).
+Decide what changes to make to their task lists and respond with JSON only:
+
+{
+  "actions": [
+    { "op": "create", "text": "string", "thisWeek": false },
+    { "op": "complete", "id": "existing task id" },
+    { "op": "uncomplete", "id": "existing task id" },
+    { "op": "edit", "id": "existing task id", "text": "new text" },
+    { "op": "delete", "id": "existing task id" }
+  ],
+  "message": "string or null"
+}
+
+Rules:
+- Only reference existing tasks by the exact id shown in the context.
+- New tasks default to today; set "thisWeek": true only if the user is
+  clearly planning their week.
+- A single utterance can map to multiple actions (e.g. add three tasks).
+- If the request is ambiguous or you cannot map it to any action, return
+  "actions": [] and put a short clarifying question in "message".
+- "message" must be written in the SAME LANGUAGE the user spoke. Use it for
+  clarifying questions, or a brief confirmation, or null if actions speak
+  for themselves.
+
+Current state:
+${context}`;
+
   const completionRes = await fetch(`${OPENAI_API}/chat/completions`, {
     method: "POST",
     headers: {
@@ -34,22 +108,57 @@ export default handler(async ({ event }) => {
     body: JSON.stringify({
       model: "gpt-4o-mini",
       messages: [
-        {
-          role: "system",
-          content:
-            'Extract a list of tasks from the user\'s speech. Return JSON: {"tasks": ["task1", "task2"]}. If it\'s a single task, return an array with one item.',
-        },
-        { role: "user", content: transcription.text },
+        { role: "system", content: systemPrompt },
+        { role: "user", content: spoken },
       ],
       response_format: { type: "json_object" },
     }),
   });
   const completion = (await completionRes.json()) as {
-    choices: { message: { content: string } }[];
+    choices?: { message: { content: string } }[];
   };
 
-  const parsed = JSON.parse(completion.choices[0].message.content ?? "{}");
-  const tasks: string[] = parsed.tasks ?? [transcription.text];
+  let parsed: { actions?: Action[]; message?: string | null } = {};
+  try {
+    parsed = JSON.parse(completion.choices?.[0]?.message?.content ?? "{}");
+  } catch {
+    parsed = {};
+  }
 
-  return { transcription: transcription.text, tasks };
+  const actions = Array.isArray(parsed.actions) ? parsed.actions : [];
+  const validIds = new Set(flat.map((t) => t.id));
+
+  // 3. Apply the actions. Unknown ids are skipped defensively so a model
+  //    hallucination can't blow up the request.
+  for (const a of actions) {
+    if (a.op === "create" && a.text?.trim()) {
+      const dayId = today.id;
+      const maxOrder = await prisma.task.aggregate({
+        where: { dayId },
+        _max: { order: true },
+      });
+      await prisma.task.create({
+        data: {
+          text: a.text.trim(),
+          dayId,
+          thisWeek: a.thisWeek === true,
+          order: (maxOrder._max.order ?? -1) + 1,
+        },
+      });
+    } else if (a.id && validIds.has(a.id)) {
+      if (a.op === "complete") {
+        await prisma.task.update({ where: { id: a.id }, data: { completed: true } });
+      } else if (a.op === "uncomplete") {
+        await prisma.task.update({ where: { id: a.id }, data: { completed: false } });
+      } else if (a.op === "edit" && a.text?.trim()) {
+        await prisma.task.update({ where: { id: a.id }, data: { text: a.text.trim() } });
+      } else if (a.op === "delete") {
+        await prisma.task.delete({ where: { id: a.id } });
+      }
+    }
+  }
+
+  const message = typeof parsed.message === "string" && parsed.message.trim() ? parsed.message.trim() : null;
+
+  return { transcription: spoken, message, days: await allDays() };
 });
